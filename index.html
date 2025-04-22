@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MP4 を GIFに変更</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        input[type="file"] {
+            margin: 20px 0;
+        }
+        #output {
+            margin-top: 20px;
+        }
+        img {
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>MP4 to GIF Converter</h1>
+    <input type="file" id="videoFile" accept="video/mp4">
+    <button id="convertButton">Convert to GIF</button>
+    <div id="output">
+        <h3>Converted GIF:</h3>
+        <img id="gifOutput" src="" alt="">
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@latest"></script>
+    <script>
+        const videoFileInput = document.getElementById('videoFile');
+        const convertButton = document.getElementById('convertButton');
+        const gifOutput = document.getElementById('gifOutput');
+
+        convertButton.addEventListener('click', async () => {
+            const file = videoFileInput.files[0];
+            if (!file) {
+                alert("Please select an MP4 file.");
+                return;
+            }
+
+            // Load the ffmpeg library
+            const { createFFmpeg, fetchFile } = FFmpeg;
+            const ffmpeg = createFFmpeg({ log: true });
+
+            await ffmpeg.load();
+
+            // Read the video file
+            ffmpeg.FS('writeFile', file.name, await fetchFile(file));
+
+            // Run ffmpeg to convert MP4 to GIF
+            await ffmpeg.run('-i', file.name, '-t', '10', '-s', '320x240', 'output.gif');
+
+            // Get the output GIF file
+            const gifData = ffmpeg.FS('readFile', 'output.gif');
+
+            // Convert the output to a blob and create a URL
+            const gifBlob = new Blob([gifData.buffer], { type: 'image/gif' });
+            const gifUrl = URL.createObjectURL(gifBlob);
+
+            // Display the GIF
+            gifOutput.src = gifUrl;
+        });
+    </script>
+</body>
+</html>
